@@ -1,5 +1,7 @@
 import pygame
 import sys
+from Car import Car
+
 SCREEN_SIZE = (800,500)
 GRASS_COLOR = (20,183,43)
 ROAD_COLOR = (75,75,75)
@@ -18,8 +20,12 @@ clock = pygame.time.Clock()
 
 inc = 1
 
-while running:  
+aCar = Car(screen)
 
+
+while running:  
+    forward = 0
+    turn = 0
     for event in pygame.event.get():
     #############################
         if event.type == pygame.QUIT:
@@ -39,38 +45,39 @@ while running:
         origin = pos
     if(key[pygame.K_e]):#end Line
         pygame.draw.rect(race_track,FINISHLINE_COLOR,[pos[0]-25,pos[1]-25,50,50], 30)
-    if(key[pygame.K_q]):#adds car
-        car_cords = origin
+    if(key[pygame.K_q]):#adds/ resets car
+        aCar.pos = origin
     #Moves car
-    if(key[pygame.K_LEFT]):
-        car_cords = (car_cords[0] - inc,car_cords[1])
-    if(key[pygame.K_RIGHT]):
-        car_cords = (car_cords[0] + inc,car_cords[1])
     if(key[pygame.K_UP]):
-        car_cords = (car_cords[0] ,car_cords[1] - inc)
-    if(key[pygame.K_DOWN]):
-        car_cords = (car_cords[0] ,car_cords[1] + inc)
+        forward = 1
+    if(key[pygame.K_LEFT]):
+        turn += 1
+    if(key[pygame.K_RIGHT]):
+        turn -= 1
     
     #Saves an image of the track
     if(key[pygame.K_b]):
-        race_track.set_at((0,0),(origin[0],origin[1],0))
+        race_track.set_at((0,0),(origin[0],origin[1],0,255))
         screen.blit(race_track,(0,0))  # Blit portion of the display to the image
         pygame.image.save(screen,"raceTrack.png")
 
     reset = False
-    if(car_cords > (0,0) and car_cords < SCREEN_SIZE):
-        if(race_track.get_at(car_cords) == GRASS_COLOR):
+    if(aCar.pos > (0,0) and aCar.pos < SCREEN_SIZE):
+        if(race_track.get_at(aCar.carPosition()) == GRASS_COLOR):
             print("crash")
             reset = True
-        elif(race_track.get_at(car_cords) == FINISHLINE_COLOR):
+            aCar.speed = 0
+        elif(race_track.get_at(aCar.carPosition()) == FINISHLINE_COLOR):
             print("You've won")
             reset = True
+            aCar.speed = 0
         if(reset == True):
-            car_cords = origin
+            aCar.pos = origin
 
-   
     screen.blit(race_track, (0,0))
-    pygame.draw.circle(screen, CAR_COLOR,car_cords,rad - 20)
+    aCar.move(forward, turn)
+    aCar.cast_ray(length = 7)
+    aCar.draw()
     pygame.display.flip()
 
     clock.tick(60)
