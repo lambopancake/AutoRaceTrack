@@ -15,8 +15,9 @@ class Car():
     def vec(self, direction, magnitude, scale = 1):
         return (magnitude * math.cos(math.radians(direction)) * scale, magnitude * math.sin(math.radians(direction)) * scale)
 
-    def points(self):
-        m = math.tan(math.radians(self.angle)) + 0.00000000001
+    def endPoint(self, angle):
+        angle = self.normAngle(angle + 0.0001)
+        m = math.tan(math.radians(angle)) + 0.00000001
         b = (-m * self.pos[0]) + self.pos[1]
         
         #y1 = m(0) + b
@@ -27,7 +28,23 @@ class Car():
         x1 = -b / m
         x2 = (500 - b) / m
 
-        return [(0, y1),(800, y2),(x1, 0),(x2, 500)]
+        if(angle >= 270): #quad 4
+            return (x1,0) if not((x1,0) > (self.screenSize[0],y2)) else (self.screenSize[0],y2)
+        elif(angle >= 180): #quad 3
+            return (x1,0) if (x1,0) > (0,y1) else (0,y1)
+        elif(angle >= 90): #quad 2
+            return (x2,self.screenSize[1]) if (x2,self.screenSize[1]) > (0,y1) else (0,y1)
+        else: #quad 1
+            return (x2,self.screenSize[1]) if not((x2,self.screenSize[1]) > (self.screenSize[0], y2)) else (self.screenSize[0], y2)
+        
+
+    def normAngle(self, ang):
+        if(ang >= 360): #angle range (1 - 360)
+            return ang - 360
+        elif(ang <= 0):
+            return ang + 360
+        else:
+            return ang
         
     def draw(self, color = (255,0,0)):
         length = 100#self.size * 2
@@ -52,36 +69,26 @@ class Car():
                 self.speed = 0
         if(turn != 0):
             self.angle -= turn
-            if(self.angle >= 360):
-                self.angle = 0
-            elif(self.angle <= -1):
-                self.angle = 359
+            self.angle = self.normAngle(self.angle)
         
         diffX, diffY = self.vec(self.angle, self.speed, 0.01) 
         self.pos = (self.pos[0] + diffX, self.pos[1] + diffY)
 
-    def cast_ray(self, fov = 90, rays = 4, length = 4):
+    def cast_ray(self, fov = 90, rays = 4):
         #rays on each side
         fov = fov
         inc = (fov // 2) // rays 
+        poi = self.endPoint(self.angle)
+        pygame.draw.line(self.screen, (0,200,90), self.pos, poi,width = 2)
+        pygame.draw.circle(self.screen, (0,200,90), poi, 10)
+        ang = self.angle
         for side in range(2):
-
             for ray in range(rays):
-                poi = self.points()
-                
-                #left side
-                pygame.draw.line(self.screen, (255,0,0), self.pos, poi[0],width = 2)
-                pygame.draw.circle(self.screen, (255,0,0), poi[0], 30)
-                #right side
-                pygame.draw.line(self.screen, (0,255,0), self.pos, poi[1],width = 2)
-                pygame.draw.circle(self.screen, (0,255,0), poi[1], 30)
-                #uppder side
-                pygame.draw.line(self.screen, (0,0,255), self.pos, poi[2],width = 2)
-                pygame.draw.circle(self.screen, (0,0,255), poi[2], 30)
-                #lower side
-                pygame.draw.line(self.screen, (200,200,200), self.pos, poi[3],width = 2)
-                pygame.draw.circle(self.screen, (200,200,200), poi[3], 30)
-
+                ang += inc
+                poi = self.endPoint(ang)
+                pygame.draw.line(self.screen, (0,200,90), self.pos, poi,width = 2)
+                pygame.draw.circle(self.screen, (0,200,90), poi, 10)
+            ang = self.angle
             inc *= -1
     
     def carPosition(self):
@@ -97,12 +104,6 @@ if __name__ == "__main__":
     aCar.pos = (100,100)
     forward = 0
     turn = 0
-
-    # for i in range(359):
-    #     print(i, ": \t",math.tan(math.radians(i)))
-        
-
-
 
     while running:
         screen.fill((0,0,0))
@@ -123,9 +124,8 @@ if __name__ == "__main__":
             turn -= 1
 
         aCar.move(forward, turn)
-        aCar.cast_ray(fov = 0, rays = 1)
+        aCar.cast_ray(360,10)
         aCar.draw()
-        #print(aCar.angle)
         pygame.display.update()
         clock.tick(120)
     pygame.quit()
