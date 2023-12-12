@@ -3,17 +3,32 @@ import sys
 import pygame
 
 class Car():
-    def __init__(self, screen):
+    def __init__(self, screen , screenSize = (800,500)):
         self.MAXSPEED = 200
         self.speed = 0
         self.angle = 0 # 0-359
         self.pos = (-100,-100) # (x,y)
         self.size = 10
         self.screen = screen
+        self.screenSize = screenSize 
 
     def vec(self, direction, magnitude, scale = 1):
         return (magnitude * math.cos(math.radians(direction)) * scale, magnitude * math.sin(math.radians(direction)) * scale)
 
+    def points(self):
+        m = math.tan(math.radians(self.angle)) + 0.00000000001
+        b = (-m * self.pos[0]) + self.pos[1]
+        
+        #y1 = m(0) + b
+        y1 = b
+        y2 = (m * 800) + b
+
+        #x1 = (0 - b)/m
+        x1 = -b / m
+        x2 = (500 - b) / m
+
+        return [(0, y1),(800, y2),(x1, 0),(x2, 500)]
+        
     def draw(self, color = (255,0,0)):
         length = 100#self.size * 2
         diffX, diffY = self.vec(self.angle, length)
@@ -48,30 +63,25 @@ class Car():
     def cast_ray(self, fov = 90, rays = 4, length = 4):
         #rays on each side
         fov = fov
-        length = 1000#self.size * length
         inc = (fov // 2) // rays 
         for side in range(2):
-            ang = self.angle
+
             for ray in range(rays):
-                slope = math.tan(math.radians(ang)) + 0.00000000001# * -1
-                x1 = slope * (0 - self.pos[0]) + self.pos[1]
-                x2 = slope * (800 - self.pos[0]) + self.pos[1]
-                y1 = ((500 - self.pos[1]) / slope) + self.pos[0]
-                y2 = ((0 - self.pos[1]) / slope) + self.pos[0]
-                   
-                pygame.draw.line(self.screen, (0,200,90), self.pos, (x1, 0),width = 2)
-                pygame.draw.circle(self.screen, (0,200,90), (x1, 0), 30)
+                poi = self.points()
+                
+                #left side
+                pygame.draw.line(self.screen, (255,0,0), self.pos, poi[0],width = 2)
+                pygame.draw.circle(self.screen, (255,0,0), poi[0], 30)
+                #right side
+                pygame.draw.line(self.screen, (0,255,0), self.pos, poi[1],width = 2)
+                pygame.draw.circle(self.screen, (0,255,0), poi[1], 30)
+                #uppder side
+                pygame.draw.line(self.screen, (0,0,255), self.pos, poi[2],width = 2)
+                pygame.draw.circle(self.screen, (0,0,255), poi[2], 30)
+                #lower side
+                pygame.draw.line(self.screen, (200,200,200), self.pos, poi[3],width = 2)
+                pygame.draw.circle(self.screen, (200,200,200), poi[3], 30)
 
-                pygame.draw.line(self.screen, (0,200,90), self.pos, (x2, 500),width = 2)
-                pygame.draw.circle(self.screen, (0,200,90), (x2, 500), 30)
-
-                pygame.draw.line(self.screen, (0,200,90), self.pos, (0, y1),width = 2)
-                pygame.draw.circle(self.screen, (0,200,90), (0, y1), 30)
-
-                pygame.draw.line(self.screen, (0,200,90), self.pos, (800, y2),width = 2)
-                pygame.draw.circle(self.screen, (0,200,90), (800, y2), 30)
-
-                #print("\t\t", (endX, endY))
             inc *= -1
     
     def carPosition(self):
@@ -88,34 +98,34 @@ if __name__ == "__main__":
     forward = 0
     turn = 0
 
-    for i in range(359):
-        print(i, ": \t",math.tan(math.radians(i)))
+    # for i in range(359):
+    #     print(i, ": \t",math.tan(math.radians(i)))
         
 
 
 
-    # while running:
-    #     screen.fill((0,0,0))
-    #     forward = 0
-    #     turn = 0
-    #     for event in pygame.event.get():
-    #          #############################
-    #         if event.type == pygame.QUIT:
-    #             running = False
-    #          ################################
+    while running:
+        screen.fill((0,0,0))
+        forward = 0
+        turn = 0
+        for event in pygame.event.get():
+             #############################
+            if event.type == pygame.QUIT:
+                running = False
+             ################################
         
-    #     key = pygame.key.get_pressed()
-    #     if(key[pygame.K_UP]):
-    #         forward = 1
-    #     if(key[pygame.K_LEFT]):
-    #         turn += 1
-    #     if(key[pygame.K_RIGHT]):
-    #         turn -= 1
+        key = pygame.key.get_pressed()
+        if(key[pygame.K_UP]):
+            forward = 1
+        if(key[pygame.K_LEFT]):
+            turn += 1
+        if(key[pygame.K_RIGHT]):
+            turn -= 1
 
-    #     aCar.move(forward, turn)
-    #     aCar.cast_ray(fov = 0, rays = 1)
-    #     aCar.draw()
-    #     #print(aCar.angle)
-    #     pygame.display.update()
-    #     clock.tick(120)
-    # pygame.quit()
+        aCar.move(forward, turn)
+        aCar.cast_ray(fov = 0, rays = 1)
+        aCar.draw()
+        #print(aCar.angle)
+        pygame.display.update()
+        clock.tick(120)
+    pygame.quit()
