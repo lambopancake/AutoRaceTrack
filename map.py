@@ -1,5 +1,8 @@
 import pygame
 import sys
+import os
+from rewards import rewardPoints, rewardLocation, rewardCalc
+from time import sleep
 from Car import Car
 
 SCREEN_SIZE = (800,500)
@@ -22,7 +25,9 @@ inc = 1
 
 aCar = Car(screen)
 
-
+n = 0
+roadCenter = []
+current_point = 0
 while running:  
     forward = 0
     turn = 0
@@ -36,8 +41,11 @@ while running:
     rad = 30
     length, width = 10,5
     pos = pygame.mouse.get_pos()
+    
     if(key[pygame.K_w]):#draws track
         pygame.draw.circle(race_track, ROAD_COLOR,pos,rad)
+        n += 1
+        roadCenter.append(pos)
     if(key[pygame.K_d]):#deletes track
         pygame.draw.circle(race_track, GRASS_COLOR,pos,rad)
     if(key[pygame.K_s]):#start line squre
@@ -50,34 +58,54 @@ while running:
     #Moves car
     if(key[pygame.K_UP]):
         forward = 1
+    if(key[pygame.K_DOWN]):
+            forward -= 1
     if(key[pygame.K_LEFT]):
         turn += 1
     if(key[pygame.K_RIGHT]):
         turn -= 1
+
     
     #Saves an image of the track
     if(key[pygame.K_b]):
         race_track.set_at((0,0),(origin[0],origin[1],0,255))
         screen.blit(race_track,(0,0))  # Blit portion of the display to the image
         pygame.image.save(screen,"raceTrack.png")
-
+   
     reset = False
     if(aCar.pos > (0,0) and aCar.pos < SCREEN_SIZE):
+        rewards = rewardPoints(roadCenter, rad = 50)
+        for i in range(len(rewards)): #used to track the current reward point
+            if(current_point == i):
+                pygame.draw.circle(race_track, (155,115,255),rewards[i],3)
+            else:
+                pygame.draw.circle(race_track, (255,215,0),rewards[i],5)
+
+        current_point = rewardLocation(roadCenter, aCar.carPosition(), current_point)
+        print(current_point, end = "  ")
+        print(rewardCalc(roadCenter, aCar.carPosition(), current_point))
         if(race_track.get_at(aCar.carPosition()) == GRASS_COLOR):
             print("crash")
             reset = True
-            aCar.speed = 0
+            
         elif(race_track.get_at(aCar.carPosition()) == FINISHLINE_COLOR):
             print("You've won")
             reset = True
-            aCar.speed = 0
+            
         if(reset == True):
             aCar.pos = origin
+            current_point = 0
+            aCar.speed = 0
+            aCar.angle = 0
+            sleep(0.2)
 
     screen.blit(race_track, (0,0))
     aCar.move(forward, turn)
-    aCar.cast_ray(length = 7)
-    aCar.draw()
+    if((aCar.pos[0] <= 800 and aCar.pos[0] >= 0) and (aCar.pos[1] <= 500, aCar.pos[1] >= 0)):
+        
+        list_ = aCar.cast_ray_color(GRASS_COLOR, FINISHLINE_COLOR)
+        aCar.draw()
+        
     pygame.display.flip()
 
-    clock.tick(60)
+    clock.tick(50)

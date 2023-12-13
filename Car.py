@@ -3,10 +3,10 @@ import sys
 import pygame
 
 class Car():
-    def __init__(self, screen , screenSize = (800,500)):
-        self.MAXSPEED = 200
+    def __init__(self, screen , screenSize = (800,500), MAXSPEED = 700):
+        self.MAXSPEED = MAXSPEED
         self.speed = 0
-        self.angle = 0 # 0-359
+        self.angle = 0 # 1-360
         self.pos = (-100,-100) # (x,y)
         self.size = 10
         self.screen = screen
@@ -45,18 +45,22 @@ class Car():
             return ang + 360
         else:
             return ang
+    
+    def distance(p1, p2):
+        return math.sqrt(math.pow(p2[0] - p1[0],2) + math.pow(p2[1] - p1[1],2))
         
     def draw(self, color = (255,0,0)):
-        length = 100#self.size * 2
+        length = self.size * 2
         diffX, diffY = self.vec(self.angle, length)
         pygame.draw.circle(self.screen, color, self.pos, self.size)
         pygame.draw.line(self.screen, color, self.pos, (self.pos[0] + diffX, self.pos[1] + diffY),width = 2)
     
-    def move(self, forward, turn):
+    def move(self, forward, turn, accel = 3, deccel = 2, brake = 10):
         #forward 0 or 1
         #turn is -1, 0, or 1
-        accel = 10
-        deccel = 2
+        accel = accel
+        deccel = deccel
+        brake = brake
         if(forward == 1):
             if(self.speed  < self.MAXSPEED):
                 self.speed += accel
@@ -67,6 +71,11 @@ class Car():
                 self.speed -= deccel
             else:
                 self.speed = 0
+        elif(forward == -1):
+            if(self.speed > -10):
+                self.speed -= brake
+            else:
+                self.speed = 0
         if(turn != 0):
             self.angle -= turn
             self.angle = self.normAngle(self.angle)
@@ -74,25 +83,48 @@ class Car():
         diffX, diffY = self.vec(self.angle, self.speed, 0.01) 
         self.pos = (self.pos[0] + diffX, self.pos[1] + diffY)
 
-    def cast_ray(self, fov = 90, rays = 4):
+    def cast_ray_color(self, barrier_COLOR, end_COLOR, fov = 90, rays = 3):
+        #for proper ray cast angles: 2,3,5,6
+        #any ray number that fov/rays = whole #
+        distances = []
+        for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
+            #print(angle, end = ", ")
+
+            poi = self.endPoint(angle)
+            dx = math.cos(math.radians(angle))
+            dy = math.sin(math.radians(angle))
+            cx, cy = self.pos#self.pos[0], self.pos[1]
+            
+            for _ in range(int(Car.distance(self.pos,poi))):
+                color = self.screen.get_at((int(cx),int(cy)))
+                if(color == barrier_COLOR):
+                    pygame.draw.line(self.screen, (0,90,200), self.pos, (cx,cy),width = 2)
+                    pygame.draw.circle(self.screen, (0,90,200), (cx,cy), 3)
+                    distances.append(int(Car.distance(self.pos,(cx,cy))) / Car.distance((0,0), self.screenSize))
+                    break
+                elif(color == end_COLOR):
+                    pygame.draw.line(self.screen, (200,90,200), self.pos, (cx,cy),width = 2)
+                    pygame.draw.circle(self.screen, (200,90,200), (cx,cy), 3)
+                    distances.append(1)
+                    break
+
+                cx += dx
+                cy += dy
+
+        return distances       
+
+
+    def cast_ray_boarder(self, fov = 90, rays = 3):
         #rays on each side
-        fov = fov
-        inc = (fov // 2) // rays 
-        poi = self.endPoint(self.angle)
-        pygame.draw.line(self.screen, (0,200,90), self.pos, poi,width = 2)
-        pygame.draw.circle(self.screen, (0,200,90), poi, 10)
-        ang = self.angle
-        for side in range(2):
-            for ray in range(rays):
-                ang += inc
-                poi = self.endPoint(ang)
-                pygame.draw.line(self.screen, (0,200,90), self.pos, poi,width = 2)
-                pygame.draw.circle(self.screen, (0,200,90), poi, 10)
-            ang = self.angle
-            inc *= -1
+       for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
+            pygame.draw.line(self.screen, (0,90,200), self.pos, self.endPoint(angle),width = 2)
+            pygame.draw.circle(self.screen, (0,90,200), self.endPoint(angle), 10)
+
     
-    def carPosition(self):
+    def carPosition(self,):
         return (int(self.pos[0]), int(self.pos[1]))
+
+
 if __name__ == "__main__":
     
     clock = pygame.time.Clock()
@@ -122,10 +154,13 @@ if __name__ == "__main__":
             turn += 1
         if(key[pygame.K_RIGHT]):
             turn -= 1
+        if(key[pygame.K_DOWN]):
+            forward -= 1
 
         aCar.move(forward, turn)
-        aCar.cast_ray(360,10)
+        aCar.cast_ray_boarder()
         aCar.draw()
+        print(aCar.speed)
         pygame.display.update()
-        clock.tick(120)
+        clock.tick(60)
     pygame.quit()
