@@ -18,15 +18,15 @@ def rewardPoints(points, rad = 30):
 
 def rewardLocation(points, pos, i, rad = 30):
     dis = distance(points[i], pos)
-    #print(dis,  end = "  ")
     if(dis < rad * 0.9 and (i + 1 < len(points))):
         return i + 1
     return i
 
-def rewardCalc(points, pos, i):
-    dis = distance(points[i], pos)
-    point = (1 - (dis / distance((0,0), (800,500)))) * 1
-    return point
+def rewardCalc(points, pos, i, trackLength, ):
+    maxDist = distance((0,0), (800, 500))
+    reward = (calcTrackLength(points, i) - distance(pos, points[i]))/ trackLength
+    return  0 if reward < 0 else reward
+    #return (calcTrackLength(points, i) / trackLength) + (1 - (distance(pos, points[i]) / trackLength)) 
 
 def calcTrackLength(points, end):
     #Gives the total distance of the track 
@@ -34,7 +34,7 @@ def calcTrackLength(points, end):
     #location
     totDist = 0
     for i in range(end):
-        if(i + 2 > len(points)):
+        if(i + 2 == len(points)): #used to work porperly for track full length
             return totDist
         totDist += distance(points[i], points[i + 1])
     return totDist

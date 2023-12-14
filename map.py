@@ -84,8 +84,9 @@ while running:
         current_point = rewardLocation(roadCenter, aCar.carPosition(), current_point)
         # print(current_point, end = "  ")
         # print(rewardCalc(roadCenter, aCar.carPosition(), current_point))
-        # print("track length: ", calcTrackLength(roadCenter, len(roadCenter)), end = "   ")
-        # print(f"Completed Track point: {current_point + 1}   driven: {calcTrackLength(roadCenter, current_point)}", )
+        #print("track length: ", calcTrackLength(roadCenter, len(roadCenter)), end = "   ")
+        #print(f"Track point: {current_point + 1}   driven: {calcTrackLength(roadCenter, current_point)}", end = "   " )
+        print("Completed %", rewardCalc(roadCenter, aCar.carPosition(), current_point, calcTrackLength(roadCenter, len(roadCenter))))
         if(race_track.get_at(aCar.carPosition()) == GRASS_COLOR):
             print("crash")
             reset = True
