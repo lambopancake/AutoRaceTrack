@@ -28,13 +28,15 @@ def rewardCalc(points, pos, i):
     point = (1 - (dis / distance((0,0), (800,500)))) * 1
     return point
 
-def calcTrackLength(points):
+def calcTrackLength(points, end):
     #Gives the total distance of the track 
     #depending on the start and end square
     #location
     totDist = 0
-    for i in range(len(points) - 1):
-        totDist = distance(points[i], points[i + 1])
+    for i in range(end):
+        if(i + 2 > len(points)):
+            return totDist
+        totDist += distance(points[i], points[i + 1])
     return totDist
 
     

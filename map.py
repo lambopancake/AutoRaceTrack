@@ -1,7 +1,7 @@
 import pygame
 import sys
 import os
-from rewards import rewardPoints, rewardLocation, rewardCalc
+from rewards import rewardPoints, rewardLocation, rewardCalc, calcTrackLength
 from time import sleep
 from Car import Car
 
@@ -82,8 +82,10 @@ while running:
                 pygame.draw.circle(race_track, (255,215,0),rewards[i],5)
 
         current_point = rewardLocation(roadCenter, aCar.carPosition(), current_point)
-        print(current_point, end = "  ")
-        print(rewardCalc(roadCenter, aCar.carPosition(), current_point))
+        # print(current_point, end = "  ")
+        # print(rewardCalc(roadCenter, aCar.carPosition(), current_point))
+        # print("track length: ", calcTrackLength(roadCenter, len(roadCenter)), end = "   ")
+        # print(f"Completed Track point: {current_point + 1}   driven: {calcTrackLength(roadCenter, current_point)}", )
         if(race_track.get_at(aCar.carPosition()) == GRASS_COLOR):
             print("crash")
             reset = True
