@@ -14,8 +14,9 @@ with open("tracks//raceTrack1.txt",'r') as file:
     fileOut = list(file)
 
 #Completed in two to make it easier
+#To convert string back to list of tuples of (x,y)
 fileOut = list(map(lambda x: tuple(x[:-1].split()), fileOut))
-fileOut = list(map(lambda x: tuple(map(lambda y: int(y), x)), fileOut))
+fileOut = list(map(lambda x: tuple(map(lambda y: int(y), x)), fileOut)) #tuple of string to tuple of int
 
 origin = fileOut[0]
 rewards = fileOut[1:]
@@ -39,7 +40,7 @@ pygame.display.flip()
 
 clock = pygame.time.Clock()
 
-aCar = Car(img)
+aCar = Car(img, MAXSPEED = 300)
 aCar.pos = origin
 current_point = 0
 
@@ -76,6 +77,7 @@ while(running):
     rgb = tuple(img.transpose(1,0,2)[aCar.carPosition()[0], aCar.carPosition()[1]])
 
     ######RESET######
+    rgb = tuple(img.transpose(1,0,2)[aCar.carPosition()[0], aCar.carPosition()[1]])
     if(rgb[::-1] == GRASS_COLOR):
         aCar.pos = origin
         aCar.speed = 0
@@ -107,5 +109,5 @@ while(running):
         pygame.draw.line(screen, (200,200,0), aCar.pos, rays,width = 1)
     
     pygame.display.update()
-    clock.tick(50)
+    clock.tick(60)
 pygame.quit()

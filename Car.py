@@ -11,14 +11,14 @@ class Car():
         self.pos = (-100,-100) # (x,y)
         self.size = 10
         self.img = img
-        self.imgSize = (800,500)#img.shape[:2] 
+        self.imgSize = img.transpose(1,0,2).shape[:2]
 
     def vec(self, direction, magnitude, scale = 1):
         return (magnitude * math.cos(math.radians(direction)) * scale, magnitude * math.sin(math.radians(direction)) * scale)
 
-    def endPoint(self, angle):
+    def endPoint(self, angle): #Not vary use full but returns point of ray that hits the side of the screen
         angle = self.normAngle(angle + 0.0001)
-        m = math.tan(math.radians(angle)) + 0.00000001
+        m = math.tan(math.radians(angle)) + 0.00000001 #the adition is so / 0 error doesnt occur
         b = (-m * self.pos[0]) + self.pos[1]
         
         #y1 = m(0) + b
@@ -39,15 +39,15 @@ class Car():
             return (x2,self.imgSize[1]) if not((x2,self.imgSize[1]) > (self.imgSize[0], y2)) else (self.imgSize[0], y2)
         
 
-    def normAngle(self, ang):
-        if(ang >= 360): #angle range (1 - 360)
+    def normAngle(self, ang): #angle range (1 - 360)
+        if(ang >= 360): 
             return ang - 360
         elif(ang <= 0):
             return ang + 360
         else:
             return ang
     
-    def distance(p1, p2):
+    def distance(p1, p2): #returns distance between two points
         return math.sqrt(math.pow(p2[0] - p1[0],2) + math.pow(p2[1] - p1[1],2))
         
     # def draw(self, color = (255,0,0)):
@@ -56,12 +56,12 @@ class Car():
     #     pygame.draw.circle(self.screen, color, self.pos, self.size)
     #     pygame.draw.line(self.screen, color, self.pos, (self.pos[0] + diffX, self.pos[1] + diffY),width = 2)
     
-    def forwardArrow(self):
+    def forwardArrow(self): #used for visualizing the front of the car
         length = self.size * 2
         diffX, diffY = self.vec(self.angle, length)
-        return (self.pos[0] + diffX, self.pos[1] + diffY)
+        return (self.pos[0] + diffX, self.pos[1] + diffY) #returns a point in front to be rendered after
 
-    def move(self, forward, turn, accel = 3, deccel = 2, brake = 10):
+    def move(self, forward, turn, accel = 3, deccel = 2, brake = 10): #self maintained no return 
         #forward 0 or 1
         #turn is -1, 0, or 1
         accel = accel
@@ -89,57 +89,56 @@ class Car():
         diffX, diffY = self.vec(self.angle, self.speed, 0.01) 
         self.pos = (self.pos[0] + diffX, self.pos[1] + diffY)
 
-    def cast_ray_points(self, barrier_COLOR, end_COLOR, fov = 90, rays = 3):
-        #for proper ray cast angles: 2,3,5,6
-        #any ray number that fov/rays = whole #
+    def cast_ray_points(self, barrier_COLOR, end_COLOR, fov = 90, rays = 3): #Used for visuales
+        #best rays parameter: 2,3,5,6
+        #any ray number that (fov/2)/rays = whole #
+        #barrier_color would be the grass
+        #end_color would be the finish square color
+        #   which returns 1 if the rays detects it
         distances = []
         for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
-            #print(angle, end = ", ")
+        
 
             poi = self.endPoint(angle)
             dx = math.cos(math.radians(angle))
             dy = math.sin(math.radians(angle))
-            cx, cy = self.pos#self.pos[0], self.pos[1]
+            cx, cy = self.pos
             
             for _ in range(int(Car.distance(self.pos,poi))):
                 color = tuple((self.img.transpose(1,0,2))[int(cx),int(cy)])[::-1]
                 if(color == barrier_COLOR):
-                    # pygame.draw.line(self.screen, (0,90,200), self.pos, (cx,cy),width = 2)
-                    # pygame.draw.circle(self.screen, (0,90,200), (cx,cy), 3)
-                    # distances.append(int(Car.distance(self.pos,(cx,cy))) / Car.distance((0,0), self.imgSize))
                     distances.append((cx,cy))
                     break
                 elif(color == end_COLOR):
-                    # pygame.draw.line(self.screen, (200,90,200), self.pos, (cx,cy),width = 2)
-                    # pygame.draw.circle(self.screen, (200,90,200), (cx,cy), 3)
-                    # distances.append(1)
                     distances.append((cx,cy))
                     break
 
                 cx += dx
                 cy += dy
 
-        return distances       
+        return distances 
+
     def ray_dist(self, barrier_COLOR, end_COLOR, fov = 90, rays = 3):
-        #for proper ray cast angles: 2,3,5,6
-        #any ray number that fov/rays = whole #
+        #same as cast_ray_points 
+        #but returns the distances of each array
+        #from left most ray to right most ray
         distances = []
         for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
 
             poi = self.endPoint(angle)
             dx = math.cos(math.radians(angle))
             dy = math.sin(math.radians(angle))
-            cx, cy = self.pos#self.pos[0], self.pos[1]
-            
+            cx, cy = self.pos    
+
             for _ in range(int(Car.distance(self.pos,poi))):
+
                 color = tuple((self.img.transpose(1,0,2))[int(cx),int(cy)])[::-1]
+
                 if(color == barrier_COLOR):
                     distances.append(int(Car.distance(self.pos,(cx,cy))) / Car.distance((0,0), self.imgSize))
-                    
                     break
                 elif(color == end_COLOR):
                     distances.append(1)
-                    
                     break
 
                 cx += dx
@@ -155,9 +154,13 @@ class Car():
 
     
     def carPosition(self):
-        return (int(self.pos[0]), int(self.pos[1]))
+        return tuple(map(lambda x: int(x) , self.pos))
+        ##return (int(self.pos[0]), int(self.pos[1]))
 
 
+###needs updating########
+####Dont run######
+####car object works#####
 if __name__ == "__main__":
     
     clock = pygame.time.Clock()

@@ -17,23 +17,14 @@ screen.fill(GRASS_COLOR)
 
 running = True
 origin = None
-# car_cords = (-100,-100)
-# origin = (-100,-100)
 clock = pygame.time.Clock()
 
-# inc = 1
-
-# aCar = Car(screen)
-
-# n = 0
 roadCenter = []
 trackDist = 50
-# current_point = 0
+
 space = 0
 while running:  
-    # forward = 0
-    # turn = 0
-    # status = []
+    
     for event in pygame.event.get():
     #############################
         if event.type == pygame.QUIT:
@@ -73,19 +64,6 @@ while running:
             pygame.draw.circle(screen, (255,100,100), origin,int(rad * 0.25))
         space -= 1
     
-    # if(key[pygame.K_q]):#adds/ resets car
-    #     aCar.pos = origin
-    #Moves car
-    # if(key[pygame.K_UP]):
-    #     forward = 1
-    # if(key[pygame.K_DOWN]):
-    #         forward -= 1
-    # if(key[pygame.K_LEFT]):
-    #     turn += 1
-    # if(key[pygame.K_RIGHT]):
-    #     turn -= 1
-
-    
     #Saves an image of the track
     if(key[pygame.K_b]):
         num = 1
@@ -104,55 +82,5 @@ while running:
 
 
         sleep(1)
-   #############
-    # write the start and reward points on a text file
-   #############
-    # reset = False
-    # if(aCar.pos > (0,0) and aCar.pos < SCREEN_SIZE):
-    #     rewards = rewardPoints(roadCenter, rad = 50)
-    #     for i in range(len(rewards)): #used to track the current reward point
-    #         if(current_point == i):
-    #             pygame.draw.circle(race_track, (155,115,255),rewards[i],3)
-    #         else:
-    #             pygame.draw.circle(race_track, (255,215,0),rewards[i],5)
-
-    #     current_point = rewardLocation(roadCenter, aCar.carPosition(), current_point)
-    #     per = rewardCalc(roadCenter, aCar.carPosition(), current_point, calcTrackLength(roadCenter, len(roadCenter)))
-        
-        
-        # if(race_track.get_at(aCar.carPosition()) == GRASS_COLOR):
-        #     print("crash")
-        #     reset = True
-            
-        # elif(race_track.get_at(aCar.carPosition()) == FINISHLINE_COLOR):
-        #     print("You've won")
-        #     reset = True
-            
-        # if(reset == True):
-        #     aCar.pos = origin
-        #     current_point = 0
-        #     aCar.speed = 0
-        #     aCar.angle = 0
-        #     sleep(0.2)
-        
-
-    #screen.blit(screen, (0,0))
-    # aCar.move(forward, turn)
-    # if((aCar.pos[0] <= 800 and aCar.pos[0] >= 0) and (aCar.pos[1] <= 500, aCar.pos[1] >= 0)):
-        
-    #     list_ = aCar.cast_ray_color(GRASS_COLOR, FINISHLINE_COLOR)
-    #     aCar.draw()
-    #     #[rewards, angle, speed, [distances]]
-    #     status.append(per)
-    #     status.append(aCar.angle / 360)
-    #     status.append(aCar.speed / aCar.MAXSPEED)
-    #     status.extend(list_)
-    #     print(status)
+   
     pygame.display.update()
-
-    #pygame.display.flip()
-
-    #clock.tick(50)
-
-
-
