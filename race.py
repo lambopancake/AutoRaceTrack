@@ -3,6 +3,7 @@ import pygame
 import numpy as np
 from time import sleep
 from Car import Car
+from Rewards import rewardLocation, rewardCalc, calcTrackLength
 
 fileName = "tracks//raceTrack1.png"
 img = cv2.imread(fileName)
@@ -18,10 +19,7 @@ fileOut = list(map(lambda x: tuple(map(lambda y: int(y), x)), fileOut))
 
 origin = fileOut[0]
 rewards = fileOut[1:]
-
-
-print(type(img))
-print(img.shape)
+trackLength = calcTrackLength(rewards, len(rewards))
 
 
 running = True
@@ -43,6 +41,7 @@ clock = pygame.time.Clock()
 
 aCar = Car(img)
 aCar.pos = origin
+current_point = 0
 
 
 while(running):
@@ -93,9 +92,10 @@ while(running):
     #print(aCar.ray_dist(GRASS_COLOR, FINISHLINE_COLOR))
     
     ########rewards#######
+    current_point = rewardLocation(rewards, aCar.carPosition(), current_point)
+    per = rewardCalc(rewards, aCar.carPosition(), current_point, calcTrackLength(rewards, len(rewards)))
     
-
-    ####
+    
     #####RENDER############
     pygame.draw.circle(screen, (255,0,0),aCar.pos, 5)
     pygame.draw.line(screen, (255,0,0), aCar.pos, aCar.forwardArrow(),width = 2)
@@ -103,8 +103,8 @@ while(running):
     raysPoints = aCar.cast_ray_points(GRASS_COLOR, FINISHLINE_COLOR)
     
     for rays in raysPoints:
-        pygame.draw.circle(screen, (255,0,0),rays, 2)
-        pygame.draw.line(screen, (255,0,0), aCar.pos, rays,width = 1)
+        pygame.draw.circle(screen, (200,200,0),rays, 2)
+        pygame.draw.line(screen, (200,200,0), aCar.pos, rays,width = 1)
     
     pygame.display.update()
     clock.tick(50)
