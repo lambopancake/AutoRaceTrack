@@ -1,4 +1,5 @@
 from Car import Car
+import math
 
 distance = Car.distance
 def rewardPoints(points, rad = 30):
@@ -39,4 +40,13 @@ def calcTrackLength(points, end):
         totDist += distance(points[i], points[i + 1])
     return totDist
 
-    
+def angles(points):
+    angles = []
+    for p in range(len(points) - 1):
+        dy = points[p + 1][1] - points[p][1] 
+        dx = points[p + 1][0] - points[p][0] + 0.000000001
+        angle = math.degrees(math.atan(dy / dx))
+        angles.append(int(angle))
+
+    return angles
+
