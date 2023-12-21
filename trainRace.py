@@ -1,5 +1,5 @@
 import os
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, DQN
 from raceEnv import raceEnv
 
 
@@ -9,7 +9,7 @@ PPO_path = os.path.join("Training", "Models")
 
 raceEnv = raceEnv()
 
-model = PPO("MlpPolicy",raceEnv, verbose = 1, tensorboard_log = Log_path)
+model = DQN("MlpPolicy",raceEnv, verbose = 1, tensorboard_log = Log_path)
 
 raceEnv.render_mode = "human"
 model.learn(total_timesteps = 2000000)

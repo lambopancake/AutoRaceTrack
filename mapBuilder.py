@@ -18,6 +18,7 @@ screen.fill(GRASS_COLOR)
 running = True
 origin = None
 clock = pygame.time.Clock()
+end = None
 
 roadCenter = []
 trackDist = 50
@@ -45,6 +46,7 @@ while running:
         origin = pos
     if(key[pygame.K_e]):#end Line
         pygame.draw.rect(screen,FINISHLINE_COLOR,[pos[0]-25,pos[1]-25,50,50], 30) 
+        end = pos
     if(key[pygame.K_SPACE]): #update this so that the reward dots appear when you press space
         space = 2
     
@@ -54,6 +56,8 @@ while running:
             pygame.draw.circle(screen, ROAD_COLOR,point,int(rad * 0.25))
         if (not(origin == None)):
             pygame.draw.circle(screen, START_COLOR, origin,int(rad * 0.25))
+        if (not(end == None)):
+            pygame.draw.circle(screen, FINISHLINE_COLOR, end,int(rad * 0.25))
         space -= 1
         
     if(len(roadCenter) >= 1 and space == 2):
@@ -62,6 +66,8 @@ while running:
             pygame.draw.circle(screen, (255,215,0),point,int(rad * 0.25))
         if (not(origin == None)):
             pygame.draw.circle(screen, (255,100,100), origin,int(rad * 0.25))
+        if (not(end == None)):
+            pygame.draw.circle(screen, (255,100,100), end,int(rad * 0.25))
         space -= 1
     
     #Saves an image of the track
@@ -76,6 +82,7 @@ while running:
             pList = []
             pList.append(origin)
             pList.extend(points)
+            pList.append(end)
 
             for tups in pList:
                 file.write(str(tups[0]) + " " + str(tups[1]) + "\n")

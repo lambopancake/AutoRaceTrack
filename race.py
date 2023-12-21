@@ -3,14 +3,15 @@ import pygame
 import numpy as np
 from time import sleep
 from Car import Car
-from Rewards import rewardLocation, rewardCalc, calcTrackLength
+from Rewards import rewardLocation, rewardCalc, calcTrackLength,angles
 
-fileName = "tracks//raceTrack1.png"
+num = 3
+fileName = f"tracks//raceTrack{num}.png"
 img = cv2.imread(fileName)
 
 fileOut = []
 
-with open("tracks//raceTrack1.txt",'r') as file:
+with open(f"tracks//raceTrack{num}.txt",'r') as file:
     fileOut = list(file)
 
 #Completed in two to make it easier
@@ -19,8 +20,9 @@ fileOut = list(map(lambda x: tuple(x[:-1].split()), fileOut))
 fileOut = list(map(lambda x: tuple(map(lambda y: int(y), x)), fileOut)) #tuple of string to tuple of int
 
 origin = fileOut[0]
-rewards = fileOut[1:]
+rewards = fileOut
 trackLength = calcTrackLength(rewards, len(rewards))
+angles = angles(rewards)
 
 
 running = True
@@ -43,7 +45,7 @@ clock = pygame.time.Clock()
 aCar = Car(img, MAXSPEED = 300)
 aCar.pos = origin
 current_point = 0
-
+i = 35
 
 while(running):
 
@@ -79,15 +81,17 @@ while(running):
     ######RESET######
     rgb = tuple(img.transpose(1,0,2)[aCar.carPosition()[0], aCar.carPosition()[1]])
     if(rgb[::-1] == GRASS_COLOR):
-        aCar.pos = origin
+        aCar.pos = rewards[i]
         aCar.speed = 0
-        aCar.angle = 0
+        aCar.angle = angles[i]
         sleep(0.2)
+        i += 1
     elif(rgb[::-1] == FINISHLINE_COLOR):
-        aCar.pos = origin
+        aCar.pos = rewards[i]
         aCar.speed = 0
-        aCar.angle = 0
+        aCar.angle = angles[i]
         sleep(0.2)
+        i += 1
 
     
     ######sensor########
@@ -107,6 +111,9 @@ while(running):
     for rays in raysPoints:
         pygame.draw.circle(screen, (200,200,0),rays, 2)
         pygame.draw.line(screen, (200,200,0), aCar.pos, rays,width = 1)
+    
+    for points in rewards:
+        pygame.draw.circle(screen, (200,200,0),points, 2)
     
     pygame.display.update()
     clock.tick(60)
