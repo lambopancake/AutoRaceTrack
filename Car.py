@@ -4,69 +4,70 @@ import cv2
 import pygame
 
 class Car():
-    def __init__(self, img, MAXSPEED = 700):
+    def __init__(self, img, MAXSPEED = 700, barrier_COLOR = (20,183,43), finish_COLOR = (20,0,200)):
         self.MAXSPEED = MAXSPEED
+        self.barrier_COLOR = barrier_COLOR
+        self.finish_COLOR =  finish_COLOR
         self.speed = 0
         self.angle = 0 # 1-360
-        self.pos = (-100,-100) # (x,y)
+        self.position = None # (x,y)
         self.size = 10
         self.img = img
         self.imgSize = img.transpose(1,0,2).shape[:2]
 
-    def vec(self, direction, magnitude, scale = 1):
-        return (magnitude * math.cos(math.radians(direction)) * scale, magnitude * math.sin(math.radians(direction)) * scale)
-
-    def endPoint(self, angle): #Not vary use full but returns point of ray that hits the side of the screen
-        angle = self.normAngle(angle + 0.0001)
-        m = math.tan(math.radians(angle)) + 0.00000001 #the adition is so / 0 error doesnt occur
-        b = (-m * self.pos[0]) + self.pos[1]
+    #returns (dx,dy) based on direction, magnitude, and scale
+    def vec(direction, magnitude, scale = 1):
+        radian = math.radians(direction)
+        return (math.cos(radian) * magnitude * scale, math.sin(radian) * magnitude * scale)
+    
+    #returns distance between two points
+    def distance(p1, p2): 
+        return math.sqrt(math.pow(p2[0] - p1[0], 2) + math.pow(p2[1] - p1[1], 2))
+    
+    #returns an angle so its always between 1-360
+    def setAngle(angle):
+        if(angle >= 360): 
+            return angle - 360
+        elif(angle <= 0):
+            return angle + 360
+        else:
+            return angle
+    
+    #returns a point in the front of the car
+    def forwardPoint(self, length = 20): 
+        dx, dy = Car.vec(self.angle, length)
+        return (self.position[0] + dx, self.position[1] + dy)
+    
+    #returns a point on the edge of the screen
+    #depending on the angle and car position
+    def limit(self, angle): 
+        angle = Car.setAngle(angle)
+        m = math.tan(math.radians(angle)) #if error at + 0.0001
+        b = (-m * self.position[0]) + self.position[1]
         
-        #y1 = m(0) + b
-        y1 = b
+        y1 = b          #y1 = m(0) + b
         y2 = (m * 800) + b
+        x1 = -b / (m + 0.000001)     #x1 = (0 - b)/m
+        x2 = (500 - b) / (m + 0.000001)
 
-        #x1 = (0 - b)/m
-        x1 = -b / m
-        x2 = (500 - b) / m
-
-        if(angle >= 270): #quad 4
+        if(angle >= 270):   #quad 4
             return (x1,0) if not((x1,0) > (self.imgSize[0],y2)) else (self.imgSize[0],y2)
         elif(angle >= 180): #quad 3
             return (x1,0) if (x1,0) > (0,y1) else (0,y1)
-        elif(angle >= 90): #quad 2
+        elif(angle >= 90):  #quad 2
             return (x2,self.imgSize[1]) if (x2,self.imgSize[1]) > (0,y1) else (0,y1)
-        else: #quad 1
+        else:               #quad 1
             return (x2,self.imgSize[1]) if not((x2,self.imgSize[1]) > (self.imgSize[0], y2)) else (self.imgSize[0], y2)
-        
 
-    def normAngle(self, ang): #angle range (1 - 360)
-        if(ang >= 360): 
-            return ang - 360
-        elif(ang <= 0):
-            return ang + 360
-        else:
-            return ang
-    
-    def distance(p1, p2): #returns distance between two points
-        return math.sqrt(math.pow(p2[0] - p1[0],2) + math.pow(p2[1] - p1[1],2))
-        
-    # def draw(self, color = (255,0,0)):
-    #     length = self.size * 2
-    #     diffX, diffY = self.vec(self.angle, length)
-    #     pygame.draw.circle(self.screen, color, self.pos, self.size)
-    #     pygame.draw.line(self.screen, color, self.pos, (self.pos[0] + diffX, self.pos[1] + diffY),width = 2)
-    
-    def forwardArrow(self): #used for visualizing the front of the car
-        length = self.size * 2
-        diffX, diffY = self.vec(self.angle, length)
-        return (self.pos[0] + diffX, self.pos[1] + diffY) #returns a point in front to be rendered after
 
-    def move(self, forward, turn, accel = 3, deccel = 2, brake = 10): #self maintained no return 
+    def move(self, forward, turn, accel = 3, deccel = 2, brake = 10): 
         #forward 0 or 1
         #turn is -1, 0, or 1
-        accel = accel
-        deccel = deccel
-        brake = brake
+
+        # accel = accel
+        # deccel = deccel
+        # brake = brake
+        
         if(forward == 1):
             if(self.speed  < self.MAXSPEED):
                 self.speed += accel
@@ -84,12 +85,41 @@ class Car():
                 self.speed = 0
         if(turn != 0):
             self.angle -= turn
-            self.angle = self.normAngle(self.angle)
+            self.angle = Car.setAngle(self.angle)
         
-        diffX, diffY = self.vec(self.angle, self.speed, 0.01) 
-        self.pos = (self.pos[0] + diffX, self.pos[1] + diffY)
+        diffX, diffY = Car.vec(self.angle, self.speed, 0.01) 
+        self.position = (self.position[0] + diffX, self.position[1] + diffY)
 
-    def cast_ray_points(self, barrier_COLOR, end_COLOR, fov = 90, rays = 3): #Used for visuales
+    #returns the distances of the rays 
+    #more details in cast_ray_points
+    def ray_dist(self, fov = 90, rays = 3):
+        distances = []
+        #angle for each ray
+        for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
+
+            limit = self.limit(angle)
+            radian = math.radians(angle)
+            dx = math.cos(radian)
+            dy = math.sin(radian)
+            cx, cy = self.position    
+
+            for _ in range(int(Car.distance(self.position,limit))):
+
+                color = tuple((self.img.transpose(1,0,2))[int(cx),int(cy)])[::-1]
+
+                if(color == self.barrier_COLOR):
+                    distances.append(int(Car.distance(self.position,(cx,cy))) / Car.distance((0,0), self.imgSize))
+                    break
+                elif(color == self.end_COLOR):
+                    distances.append(1)
+                    break
+
+                cx += dx
+                cy += dy
+
+        return distances  
+
+    def cast_ray_points(self, fov = 90, rays = 3): #Used for visuales
         #best rays parameter: 2,3,5,6
         #any ray number that (fov/2)/rays = whole #
         #barrier_color would be the grass
@@ -98,18 +128,17 @@ class Car():
         distances = []
         for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
         
-
-            poi = self.endPoint(angle)
+            limit = self.limit(angle)
             dx = math.cos(math.radians(angle))
             dy = math.sin(math.radians(angle))
-            cx, cy = self.pos
+            cx, cy = self.position
             
-            for _ in range(int(Car.distance(self.pos,poi))):
+            for _ in range(int(Car.distance(self.position, limit))):
                 color = tuple((self.img.transpose(1,0,2))[int(cx),int(cy)])[::-1]
-                if(color == barrier_COLOR):
+                if(color == self.barrier_COLOR):
                     distances.append((cx,cy))
                     break
-                elif(color == end_COLOR):
+                elif(color == self.finish_COLOR):
                     distances.append((cx,cy))
                     break
 
@@ -118,44 +147,9 @@ class Car():
 
         return distances 
 
-    def ray_dist(self, barrier_COLOR, end_COLOR, fov = 90, rays = 3):
-        #same as cast_ray_points 
-        #but returns the distances of each array
-        #from left most ray to right most ray
-        distances = []
-        for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
 
-            poi = self.endPoint(angle)
-            dx = math.cos(math.radians(angle))
-            dy = math.sin(math.radians(angle))
-            cx, cy = self.pos    
-
-            for _ in range(int(Car.distance(self.pos,poi))):
-
-                color = tuple((self.img.transpose(1,0,2))[int(cx),int(cy)])[::-1]
-
-                if(color == barrier_COLOR):
-                    distances.append(int(Car.distance(self.pos,(cx,cy))) / Car.distance((0,0), self.imgSize))
-                    break
-                elif(color == end_COLOR):
-                    distances.append(1)
-                    break
-
-                cx += dx
-                cy += dy
-
-        return distances   
-
-    # def cast_ray_boarder(self, fov = 90, rays = 3):
-    #     #rays on each side
-    #    for angle in range(self.angle - (fov // 2), self.angle + (fov // 2) + 2, (fov // 2) // rays):
-    #         pygame.draw.line(self.screen, (0,90,200), self.pos, self.endPoint(angle),width = 2)
-    #         pygame.draw.circle(self.screen, (0,90,200), self.endPoint(angle), 10)
-
-    
     def carPosition(self):
-        return tuple(map(lambda x: int(x) , self.pos))
-        ##return (int(self.pos[0]), int(self.pos[1]))
+        return tuple(map(lambda x: int(x) , self.position))
 
 
 ###needs updating########

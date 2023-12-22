@@ -3,7 +3,8 @@ import pygame
 import numpy as np
 from time import sleep
 from Car import Car
-from Rewards import rewardLocation, rewardCalc, calcTrackLength,angles
+from Rewards import RewardSys
+#from Rewards import rewardLocation, rewardCalc, calcTrackLength,angles
 
 num = 3
 fileName = f"tracks//raceTrack{num}.png"
@@ -21,8 +22,9 @@ fileOut = list(map(lambda x: tuple(map(lambda y: int(y), x)), fileOut)) #tuple o
 
 origin = fileOut[0]
 rewards = fileOut
-trackLength = calcTrackLength(rewards, len(rewards))
-angles = angles(rewards)
+rewardSys = RewardSys(rewards)
+rewardSys.trackLength = rewardSys.calcTrackLength()
+angles = RewardSys.angles(rewards)
 
 
 running = True
@@ -42,10 +44,10 @@ pygame.display.flip()
 
 clock = pygame.time.Clock()
 
-aCar = Car(img, MAXSPEED = 300)
-aCar.pos = origin
 current_point = 0
-i = 35
+i = 0
+aCar = Car(img, MAXSPEED = 300)
+aCar.position = fileOut[current_point] #which is origin
 
 while(running):
 
@@ -81,36 +83,36 @@ while(running):
     ######RESET######
     rgb = tuple(img.transpose(1,0,2)[aCar.carPosition()[0], aCar.carPosition()[1]])
     if(rgb[::-1] == GRASS_COLOR):
-        aCar.pos = rewards[i]
+        i += 1
+        aCar.position = rewards[i]
         aCar.speed = 0
         aCar.angle = angles[i]
         sleep(0.2)
-        i += 1
+        current_point = i
+        rewardSys.trackLength = rewardSys.calcTrackLength(i)
     elif(rgb[::-1] == FINISHLINE_COLOR):
-        aCar.pos = rewards[i]
+        i += 1
+        aCar.position = rewards[i]
         aCar.speed = 0
         aCar.angle = angles[i]
         sleep(0.2)
-        i += 1
+        current_point = i
+        rewardSys.trackLength = rewardSys.calcTrackLength(i)
 
-    
-    ######sensor########
-    #print(aCar.ray_dist(GRASS_COLOR, FINISHLINE_COLOR))
-    
     ########rewards#######
-    current_point = rewardLocation(rewards, aCar.carPosition(), current_point)
-    per = rewardCalc(rewards, aCar.carPosition(), current_point, calcTrackLength(rewards, len(rewards)))
-    
+    current_point = rewardSys.rewardLocation(aCar.carPosition(), current_point)
+    per = rewardSys.rewardCalc(aCar.carPosition(), i, current_point)
+    print(per)
     
     #####RENDER############
-    pygame.draw.circle(screen, (255,0,0),aCar.pos, 5)
-    pygame.draw.line(screen, (255,0,0), aCar.pos, aCar.forwardArrow(),width = 2)
+    pygame.draw.circle(screen, (255,0,0),aCar.position, 5)
+    pygame.draw.line(screen, (255,0,0), aCar.position, aCar.forwardPoint(),width = 2)
 
-    raysPoints = aCar.cast_ray_points(GRASS_COLOR, FINISHLINE_COLOR)
+    raysPoints = aCar.cast_ray_points()
     
     for rays in raysPoints:
         pygame.draw.circle(screen, (200,200,0),rays, 2)
-        pygame.draw.line(screen, (200,200,0), aCar.pos, rays,width = 1)
+        pygame.draw.line(screen, (200,200,0), aCar.position, rays,width = 1)
     
     for points in rewards:
         pygame.draw.circle(screen, (200,200,0),points, 2)
